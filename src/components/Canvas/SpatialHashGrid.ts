@@ -2,18 +2,30 @@ import hasPositionUpdate from "./types/hasPositionUpdate";
 import hasPosition from "./types/hasPositon";
 import Position from "./types/Position";
 
-export default class SpatialHashMap<T extends hasPosition & hasPositionUpdate> {
+type Cell<T> = {
+  items: Set<T>;
+  x1: number;
+  x2: number;
+  y1: number;
+  y2: number;
+};
+
+export default class SpatialHashGrid<
+  T extends hasPosition & hasPositionUpdate
+> {
   private cellWidth: number;
   private cellHeight: number;
-  private cells: Array<
-    Array<{ items: Set<T>; x1: number; x2: number; y1: number; y2: number }>
-  >;
+  private cells: Array<Array<Cell<T>>>;
+  private cellDiagonalLength: number;
   constructor(width: number, height: number, divisional: number) {
     this.cells = [];
     const x = Math.max(Math.floor(width / divisional), 1) + 2;
     const y = Math.max(Math.floor(height / divisional), 1) + 2;
     this.cellWidth = width / (x - 2);
     this.cellHeight = height / (y - 2);
+    this.cellDiagonalLength = Math.sqrt(
+      Math.pow(this.cellWidth / 2, 2) + Math.pow(this.cellHeight / 2, 2)
+    );
     for (let i = 0; i < x; i++) {
       this.cells.push([]);
       for (let j = 0; j < y; j++) {
@@ -82,11 +94,30 @@ export default class SpatialHashMap<T extends hasPosition & hasPositionUpdate> {
     return returnObj;
   }
   public getPossibleNeighbors(obj: T, distance: number): Array<T> {
-    //TODO
-    return [];
+    const cellPos = this.locateCell(obj);
+    const checkOffset = Math.ceil(distance / this.cellDiagonalLength);
+    const returnArr: Array<T> = [];
+    for (let x = cellPos.x - checkOffset; x < cellPos.x + checkOffset; x++) {
+      if (x >= 0 && x < this.cells.length) {
+        for (
+          let y = cellPos.y - checkOffset;
+          y < cellPos.y + checkOffset;
+          y++
+        ) {
+          if (y >= 0 && y < this.cells[x].length) {
+            this.cells[x][y].items.forEach((item) => returnArr.push(item));
+          }
+        }
+      }
+    }
+
+    return returnArr;
   }
-  public areNearby(obj1: T, obj2: T, distance: number): boolean {
-    //TODO
-    return false;
+  public isNearby(obj1: T, obj2: T, distanceSquared: number): boolean {
+    return (
+      distanceSquared <
+      Math.pow(obj2.getX() - obj1.getX(), 2) +
+        Math.pow(obj2.getY() - obj1.getY(), 2)
+    );
   }
 }
