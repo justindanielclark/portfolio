@@ -1,64 +1,49 @@
 import { useEffect, useRef } from "react";
 import Orb from "./Orb";
+import SpatialHashMap from "./SpatialHash";
+
+const endAngle = Math.PI * 2;
 
 function Canvas() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const canvasContextRef = useRef<CanvasRenderingContext2D | null>(null);
   const requestAnimationFrameID = useRef<number | null>(null);
   useEffect(() => {
     if (canvasRef.current) {
-      const drawableObjects = {
-        Orbs: [] as Array<Orb>,
-      };
       canvasRef.current.setAttribute("width", window.innerWidth.toString());
       canvasRef.current.setAttribute("height", window.innerHeight.toString());
-      canvasContextRef.current = canvasRef.current.getContext("2d");
+      const ctx = canvasRef.current.getContext("2d");
+      const OrbMap = new SpatialHashMap<Orb>(
+        window.innerWidth,
+        window.innerHeight,
+        Orb.qualifyingNearDistance
+      );
 
       const initializeDrawableObjects = () => {
         Orb.canvasHeight = window.innerHeight;
         Orb.canvasWidth = window.innerWidth;
-        for (let i = 0; i < 250; i++) {
-          drawableObjects.Orbs.push(
-            new Orb(
-              Math.random() * (Orb.capVelocity - Orb.baseVelocity) +
-                Orb.baseVelocity,
-              2
-            )
-          );
+        for (let i = 0; i < 75; i++) {
+          OrbMap.add(new Orb(2));
+        }
+        OrbMap.reduce<Array<{ orb1: Orb; orb2: Orb }>>((acc, cur) => {
+          return acc;
+        }, []);
+      };
+
+      const drawOrb = (orb: Orb) => {
+        if (ctx) {
+          ctx.beginPath();
+          ctx.fillStyle = "#FFFFFF";
+          ctx.arc(orb.getX(), orb.getY(), orb.getRadius(), 0, endAngle);
+          ctx.fill();
         }
       };
 
       const renderFrame = () => {
         const { width, height } = canvasRef.current as HTMLCanvasElement;
-        const ctx = canvasContextRef.current;
         if (ctx) {
           ctx.clearRect(0, 0, width, height);
-          const coloredOrb = Array(drawableObjects.Orbs.length).fill(
-            false,
-            0,
-            drawableObjects.Orbs.length
-          );
-          for (let i = 0; i < drawableObjects.Orbs.length - 1; i++) {
-            for (let j = i + 1; j < drawableObjects.Orbs.length; j++) {
-              if (
-                Orb.willOrbsCollideWithinDistance(
-                  drawableObjects.Orbs[i],
-                  drawableObjects.Orbs[j],
-                  15
-                )
-              ) {
-                coloredOrb[i] = true;
-                coloredOrb[j] = true;
-              }
-            }
-          }
-          drawableObjects.Orbs.forEach((orb, idx) => {
-            ctx.beginPath();
-            ctx.fillStyle = coloredOrb[idx] ? "#FFFF00" : "#6b7280";
-            ctx.arc(orb.xPos, orb.yPos, orb.radius, 0, Math.PI * 2);
-            ctx.fill();
-            orb.update();
-          });
+          OrbMap.updateAll();
+          OrbMap.applyAll(drawOrb);
         }
       };
 

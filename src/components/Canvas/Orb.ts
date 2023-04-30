@@ -1,38 +1,130 @@
-interface Position {
-  x: number;
-  y: number;
-}
-interface Speed {
-  xVel: number;
-  yVel: number;
-}
-type PositionAndSpeed = Position & Speed;
+import hasPositionUpdate from "./types/hasPositionUpdate";
+import hasPosition from "./types/hasPositon";
+import Position from "./types/Position";
+import Speed from "./types/Speed";
 
-export default class Orb {
+export default class Orb implements hasPosition, hasPositionUpdate {
   static canvasWidth = 0; //Set On Canvas Creation/Resize
   static canvasHeight = 0; //Set On Cavnas Creation/Resize
-  static baseVelocity = 0.3; //Lowest Possible Speed
-  static capVelocity = 5; //Highest Possible Speed
-  public xPos: number;
-  public yPos: number;
-  public radius: number;
-  public isWithinRange: boolean;
+  static baseVector = 2; // Lowest Possible Vector
+  static capVector = 6; // Highest Possible Vector
+  static baseVelocity = 0.3; //Lowest Possible Speed in a cardinal direction
+  static capVelocity = 5; //Highest Possible Speed in a cardinal direction
+  static baseRadius = 1;
+  static qualifyingNearDistance = 50;
+  private x: number;
+  private y: number;
+  private radius: number;
   private limit: number;
   private vector: number;
   private xVel: number;
   private yVel: number;
-  constructor(vector: number, radius: number) {
-    this.vector = vector;
+  constructor(radius: number) {
+    this.vector = Orb.calculateRandomVector();
     this.radius = radius;
     this.limit = radius * 2;
     const { x, y, xVel, yVel } = Orb.generateInitialStartAndVelocity(
       this.vector
     );
-    this.xPos = x;
-    this.yPos = y;
+    this.x = x;
+    this.y = y;
     this.xVel = xVel;
     this.yVel = yVel;
-    this.isWithinRange = false;
+  }
+  public update(): void {
+    this.x += this.xVel;
+    this.y += this.yVel;
+    if (this.isOutOfBounds()) {
+      this.generateNewStartingPosition();
+    }
+  }
+  public isOutOfBounds(): boolean {
+    return (
+      this.x < -this.limit ||
+      this.x > Orb.canvasWidth + this.limit ||
+      this.y < -this.limit ||
+      this.y > Orb.canvasHeight + this.limit
+    );
+  }
+  public generateNewStartingPosition(): void {
+    const { x, y, xVel, yVel } = Orb.generateNewStartAndVelocity(
+      this.limit,
+      this.vector
+    );
+    this.x = x;
+    this.y = y;
+    this.xVel = xVel;
+    this.yVel = yVel;
+  }
+  public getSpeed(): Speed {
+    return {
+      xVel: this.xVel,
+      yVel: this.yVel,
+    };
+  }
+  public getPosition(): Position {
+    return {
+      x: this.x,
+      y: this.y,
+    };
+  }
+  public getSpeedAndPosition(): Position & Speed {
+    return {
+      ...this.getPosition(),
+      ...this.getSpeed(),
+    };
+  }
+  public getX(): number {
+    return this.x;
+  }
+  public getY(): number {
+    return this.y;
+  }
+  public getRadius(): number {
+    return this.radius;
+  }
+  public static willOrbsBeNearEachOther(orb1: Orb, orb2: Orb): boolean {
+    const [o1, o2] = [orb1.getSpeedAndPosition(), orb2.getSpeedAndPosition()];
+    // calculate the distance between the orbs' current positions
+    const dx = o2.x - o1.x;
+    const dy = o2.y - o1.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    if (distance < Orb.qualifyingNearDistance) {
+      // if the orbs are already within Orb.qualifyingNearDistance units of each other, return true
+      return true;
+    }
+    // calculate the relative velocity between the orbs
+    const dvx = o2.xVel - o1.xVel;
+    const dvy = o2.yVel - o1.yVel;
+    if (dvx === 0 && dvy === 0) {
+      // if the orbs have the same velocity, they will never collide
+      return false;
+    }
+    // calculate the time it will take for the orbs to collide, if they do
+    const a = dvx * dvx + dvy * dvy;
+    const b = 2 * (dx * dvx + dy * dvy);
+    const c =
+      dx * dx +
+      dy * dy -
+      Orb.qualifyingNearDistance * Orb.qualifyingNearDistance;
+    const discriminant = b * b - 4 * a * c;
+    if (discriminant < 0) {
+      // if the discriminant is negative, the orbs will never collide
+      return false;
+    }
+    const t1 = (-b - Math.sqrt(discriminant)) / (2 * a);
+    const t2 = (-b + Math.sqrt(discriminant)) / (2 * a);
+    if (t1 < 0 && t2 < 0) {
+      // if both times are negative, the orbs will never collide
+      return false;
+    }
+    return true;
+  }
+  public static orbsAreNearEachOther(orb1: Orb, orb2: Orb): boolean {
+    const dx = orb1.getX() - orb2.getX();
+    const dy = orb1.getY() - orb2.getY();
+    const distanceBetweenOrbs = Math.sqrt(dx * dx + dy * dy);
+    return distanceBetweenOrbs <= Orb.qualifyingNearDistance;
   }
   private static generateXYVelocity(vector: number): {
     xVel: number;
@@ -44,7 +136,7 @@ export default class Orb {
   }
   private static generateInitialStartAndVelocity(
     vector: number
-  ): PositionAndSpeed {
+  ): Position & Speed {
     const { xVel, yVel } = Orb.generateXYVelocity(vector);
     return {
       x: Math.random() * Orb.canvasWidth,
@@ -56,7 +148,7 @@ export default class Orb {
   private static generateNewStartAndVelocity(
     limit: number,
     vector: number
-  ): PositionAndSpeed {
+  ): Position & Speed {
     const totalLength = 8 * limit + 2 * Orb.canvasWidth + 2 * Orb.canvasHeight;
     const startingPoint = Math.random() * totalLength;
     const { xVel, yVel } = Orb.generateXYVelocity(vector);
@@ -96,80 +188,7 @@ export default class Orb {
       yVel: Math.random() > 0.5 ? yVel : -yVel,
     };
   }
-  private outOfBounds(): boolean {
-    return (
-      this.xPos < -this.limit ||
-      this.xPos > Orb.canvasWidth + this.limit ||
-      this.yPos < -this.limit ||
-      this.yPos > Orb.canvasHeight + this.limit
-    );
+  private static calculateRandomVector(): number {
+    return Math.max(Math.random() * Orb.capVector, Orb.baseVector);
   }
-  public static willOrbsCollideWithinDistance(
-    orb1: Orb,
-    orb2: Orb,
-    distance: number
-  ): boolean {
-    const dx = orb1.xPos - orb2.xPos;
-    const dy = orb1.yPos - orb2.yPos;
-    const distanceBetweenOrbs = Math.sqrt(dx * dx + dy * dy);
-    const sumOfRadii = orb1.radius + orb2.radius;
-    return distanceBetweenOrbs - sumOfRadii <= distance;
-  }
-  public update() {
-    this.xPos += this.xVel;
-    this.yPos += this.yVel;
-    if (this.outOfBounds()) {
-      const { x, y, xVel, yVel } = Orb.generateNewStartAndVelocity(
-        this.limit,
-        this.vector
-      );
-      this.xPos = x;
-      this.yPos = y;
-      this.xVel = xVel;
-      this.yVel = yVel;
-    }
-  }
-}
-
-//TODO:
-function willOrbsCollide(orb1: Orb, orb2: Orb): boolean {
-  // calculate the distance between the orbs' current positions
-  const dx = orb2.xPos - orb1.xPos;
-  const dy = orb2.yPos - orb1.yPos;
-  const distance = Math.sqrt(dx * dx + dy * dy);
-
-  if (distance < 50) {
-    // if the orbs are already within 50 units of each other, return true
-    return true;
-  }
-
-  // calculate the relative velocity between the orbs
-  const dvx = orb2.xVel - orb1.xVel;
-  const dvy = orb2.yVel - orb1.yVel;
-
-  if (dvx === 0 && dvy === 0) {
-    // if the orbs have the same velocity, they will never collide
-    return false;
-  }
-
-  // calculate the time it will take for the orbs to collide, if they do
-  const a = dvx * dvx + dvy * dvy;
-  const b = 2 * (dx * dvx + dy * dvy);
-  const c = dx * dx + dy * dy - 50 * 50;
-  const discriminant = b * b - 4 * a * c;
-
-  if (discriminant < 0) {
-    // if the discriminant is negative, the orbs will never collide
-    return false;
-  }
-
-  const t1 = (-b - Math.sqrt(discriminant)) / (2 * a);
-  const t2 = (-b + Math.sqrt(discriminant)) / (2 * a);
-
-  if (t1 < 0 && t2 < 0) {
-    // if both times are negative, the orbs will never collide
-    return false;
-  }
-
-  return true;
 }
