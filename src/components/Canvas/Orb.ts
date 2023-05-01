@@ -11,18 +11,18 @@ export default class Orb implements hasPosition, hasPositionUpdate {
   static baseVelocity = 0.3; //Lowest Possible Speed in a cardinal direction
   static capVelocity = 5; //Highest Possible Speed in a cardinal direction
   static baseRadius = 1;
-  static qualifyingNearDistance = 50;
+  static qualifyingNearDistance = 150;
+  static limit = Orb.qualifyingNearDistance * 0.9;
   private x: number;
   private y: number;
   private radius: number;
-  private limit: number;
+
   private vector: number;
   private xVel: number;
   private yVel: number;
   constructor(radius: number) {
     this.vector = Orb.calculateRandomVector();
     this.radius = radius;
-    this.limit = radius * 2;
     const { x, y, xVel, yVel } = Orb.generateInitialStartAndVelocity(
       this.vector
     );
@@ -40,15 +40,15 @@ export default class Orb implements hasPosition, hasPositionUpdate {
   }
   public isOutOfBounds(): boolean {
     return (
-      this.x < -this.limit ||
-      this.x > Orb.canvasWidth + this.limit ||
-      this.y < -this.limit ||
-      this.y > Orb.canvasHeight + this.limit
+      this.x < -Orb.limit ||
+      this.x > Orb.canvasWidth + Orb.limit ||
+      this.y < -Orb.limit ||
+      this.y > Orb.canvasHeight + Orb.limit
     );
   }
   public generateNewStartingPosition(): void {
     const { x, y, xVel, yVel } = Orb.generateNewStartAndVelocity(
-      this.limit,
+      Orb.limit,
       this.vector
     );
     this.x = x;

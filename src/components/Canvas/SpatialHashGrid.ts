@@ -120,4 +120,10 @@ export default class SpatialHashGrid<
         Math.pow(obj2.getY() - obj1.getY(), 2)
     );
   }
+  public distBetweenSquared(obj1: T, obj2: T): number {
+    return (
+      Math.pow(obj2.getX() - obj1.getX(), 2) +
+      Math.pow(obj2.getY() - obj1.getY(), 2)
+    );
+  }
 }
