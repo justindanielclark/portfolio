@@ -41,7 +41,7 @@ function Canvas() {
       const initializeDrawableObjects = () => {
         Orb.canvasHeight = window.innerHeight;
         Orb.canvasWidth = window.innerWidth;
-        for (let i = 0; i < 175; i++) {
+        for (let i = 0; i < 500; i++) {
           OrbMap.add(new Orb(2));
         }
       };
