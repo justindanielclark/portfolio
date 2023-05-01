@@ -13,11 +13,14 @@ type Cell<T> = {
 export default class SpatialHashGrid<
   T extends hasPosition & hasPositionUpdate
 > {
-  private cellWidth: number;
-  private cellHeight: number;
-  private cells: Array<Array<Cell<T>>>;
-  private cellDiagonalLength: number;
+  private cellWidth!: number;
+  private cellHeight!: number;
+  private cells!: Array<Array<Cell<T>>>;
+  private cellDiagonalLength!: number;
   constructor(width: number, height: number, divisional: number) {
+    this.initialize(width, height, divisional);
+  }
+  private initialize(width: number, height: number, divisional: number) {
     this.cells = [];
     const x = Math.max(Math.floor(width / divisional), 1) + 2;
     const y = Math.max(Math.floor(height / divisional), 1) + 2;
@@ -125,5 +128,8 @@ export default class SpatialHashGrid<
       Math.pow(obj2.getX() - obj1.getX(), 2) +
       Math.pow(obj2.getY() - obj1.getY(), 2)
     );
+  }
+  public reset(width: number, height: number, divisional: number): void {
+    this.initialize(width, height, divisional);
   }
 }

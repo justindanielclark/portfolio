@@ -139,8 +139,8 @@ export default class Orb implements hasPosition, hasPositionUpdate {
   ): Position & Speed {
     const { xVel, yVel } = Orb.generateXYVelocity(vector);
     return {
-      x: Math.random() * Orb.canvasWidth,
-      y: Math.random() * Orb.canvasHeight,
+      x: Math.random() * (Orb.canvasWidth + Orb.limit * 2) - Orb.limit,
+      y: Math.random() * (Orb.canvasHeight + Orb.limit * 2) - Orb.limit,
       xVel: Math.random() > 0.5 ? xVel : -xVel,
       yVel: Math.random() > 0.5 ? yVel : -yVel,
     };
