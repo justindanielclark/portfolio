@@ -9,21 +9,24 @@ type Color = {
   b: number;
 };
 const ARC_END_ANGLE = Math.PI * 2;
+//Currently matches background of container
 const DARK_COLOR: Color = {
   r: 30,
   g: 41,
   b: 59,
 };
 const LIGHT_COLOR: Color = {
-  r: 50,
-  g: 61,
-  b: 79,
+  r: 0,
+  g: 100,
+  b: 100,
 };
 const COLOR_DIFF: Color = {
   r: LIGHT_COLOR.r - DARK_COLOR.r,
   g: LIGHT_COLOR.g - DARK_COLOR.g,
   b: LIGHT_COLOR.b - DARK_COLOR.b,
 };
+//Num Px Area Required Per Orb
+const ORB_COEFF = 30000;
 
 function Canvas() {
   const [timerID, setDebounce] = useDebounce();
@@ -61,7 +64,7 @@ function Canvas() {
             Orb.canvasHeight = window.innerHeight;
             Orb.canvasWidth = window.innerWidth;
             const numOrbs = Math.floor(
-              (window.innerWidth * window.innerHeight) / 3750
+              (window.innerWidth * window.innerHeight) / ORB_COEFF
             );
             for (let i = 0; i < numOrbs; i++) {
               orbMap.add(new Orb(2));
@@ -77,7 +80,7 @@ function Canvas() {
           Orb.canvasHeight = window.innerHeight;
           Orb.canvasWidth = window.innerWidth;
           const numOrbs = Math.floor(
-            (window.innerWidth * window.innerHeight) / 3750
+            (window.innerWidth * window.innerHeight) / ORB_COEFF
           );
           for (let i = 0; i < numOrbs; i++) {
             OrbMap.add(new Orb(2));
@@ -113,7 +116,7 @@ function Canvas() {
           if (ctx) {
             ctx.clearRect(0, 0, width, height);
             OrbMap.updateAll();
-            OrbMap.applyAll(drawOrb);
+            // OrbMap.applyAll(drawOrb);
             const qualifyingDistSq = Math.pow(Orb.qualifyingNearDistance, 2);
             const connections = OrbMap.reduce((acc, cur) => {
               const neighbors = OrbMap.getPossibleNeighbors(

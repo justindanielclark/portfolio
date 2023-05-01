@@ -6,12 +6,12 @@ import Speed from "./types/Speed";
 export default class Orb implements hasPosition, hasPositionUpdate {
   static canvasWidth = 0; //Set On Canvas Creation/Resize
   static canvasHeight = 0; //Set On Cavnas Creation/Resize
-  static baseVector = 2; // Lowest Possible Vector
-  static capVector = 6; // Highest Possible Vector
-  static baseVelocity = 0.3; //Lowest Possible Speed in a cardinal direction
+  static baseVector = 0.2; // Lowest Possible Vector
+  static capVector = 2; // Highest Possible Vector
+  static baseVelocity = 0.08; //Lowest Possible Speed in a cardinal direction
   static capVelocity = 5; //Highest Possible Speed in a cardinal direction
   static baseRadius = 1;
-  static qualifyingNearDistance = 150;
+  static qualifyingNearDistance = 400;
   static limit = Orb.qualifyingNearDistance * 0.9;
   private x: number;
   private y: number;
